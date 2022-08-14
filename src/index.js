@@ -2,7 +2,7 @@
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import SimpleLightbox from "simplelightbox";
 import "simplelightbox/dist/simple-lightbox.min.css";
-import PicsApiService from "./pic-api-service";
+import PicsApiService from "./picApiService";
 import './css/styles.css';
 
 const refs = {
@@ -26,31 +26,41 @@ async function onSearch(e) {
     const inputValue = e.currentTarget.elements.searchQuery.value.trim();
 
     if (!inputValue) {
-        Notify.info("Please, enter your search guery.");
+        Notify.info("Please, enter your search query.");
         return
-    } else if (inputValue === picsApiService.guery) {
-        scrollPageUp();
-        return
-    } else {
-        refs.gallery.innerHTML = "";
-        hideLoadMoreBtn();
-        picsApiService.guery = inputValue;
-        picsApiService.resetPage();
-        try {
-            const { hits, totalHits } = await picsApiService.getPics();
-                if (hits.length === 0) {
-                    Notify.failure("Sorry, there are no images matching your search query. Please try again.")
-                    return 
-                }
-            clearGalleryContainer();
-            appendPicsMarkup(hits);
-            Notify.info(`Hooray! We found ${totalHits} images.`);
-            simpleLightbox.refresh();
-            countAndIncrementPages(totalHits);  
-        } catch (error) {
-            console.log(error)
-        }
     }
+    refs.gallery.innerHTML = "";
+    hideLoadMoreBtn();
+    picsApiService.query = inputValue;
+    picsApiService.resetPage();
+    try {
+        const { hits, totalHits } = await picsApiService.getPics();
+
+        if (hits.length === 0) {
+            Notify.failure("Sorry, there are no images matching your search query. Please try again.")
+            return 
+        }
+        clearGalleryContainer();
+        appendPicsMarkup(hits);
+        Notify.info(`Hooray! We found ${totalHits} images.`);
+        simpleLightbox.refresh();
+        countAndIncrementPages(totalHits);  
+    } catch (error) {
+        console.log(error)  
+    }
+}
+
+async function onLoadMoreBtnClick() {
+    const { hits, totalHits } = await picsApiService.getPics();
+
+    try {
+        appendPicsMarkup(hits);
+        scrollByDown();
+        simpleLightbox.refresh();
+        countAndIncrementPages(totalHits) 
+    } catch (error) {
+        console.log(error)
+    }  
 }
 
 function countAndIncrementPages(amount) {
@@ -66,16 +76,6 @@ function countAndIncrementPages(amount) {
         picsApiService.incrementPage();
         return
 }
-
-
-async function onLoadMoreBtnClick() {
-    const { hits, totalHits } = await picsApiService.getPics();
-    appendPicsMarkup(hits);
-    scrollByDown();
-    simpleLightbox.refresh();
-    countAndIncrementPages(totalHits) 
-}
-
 
 function appendPicsMarkup(picsArray) {
     refs.gallery.insertAdjacentHTML("beforeend", creatPicsMarkup(picsArray));
