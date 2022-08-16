@@ -23,37 +23,36 @@ const simpleLightbox =  new SimpleLightbox('.gallery-link', {
 
 async function onSearch(e) {
     e.preventDefault();
+    clearGalleryContainer();
     const inputValue = e.currentTarget.elements.searchQuery.value.trim();
 
     if (!inputValue) {
         Notify.info("Please, enter your search query.");
         return
     }
-    refs.gallery.innerHTML = "";
     hideLoadMoreBtn();
     picsApiService.query = inputValue;
     picsApiService.resetPage();
     try {
         const { hits, totalHits } = await picsApiService.getPics();
-
+        
         if (hits.length === 0) {
-            Notify.failure("Sorry, there are no images matching your search query. Please try again.")
-            return 
+        Notify.failure("Sorry, there are no images matching your search query. Please try again.")
+        return 
         }
-        clearGalleryContainer();
         appendPicsMarkup(hits);
         Notify.info(`Hooray! We found ${totalHits} images.`);
         simpleLightbox.refresh();
-        countAndIncrementPages(totalHits);  
+        countAndIncrementPages(totalHits);
     } catch (error) {
         console.log(error)  
     }
 }
 
 async function onLoadMoreBtnClick() {
-    const { hits, totalHits } = await picsApiService.getPics();
-
     try {
+        const { hits, totalHits } = await picsApiService.getPics();
+
         appendPicsMarkup(hits);
         scrollByDown();
         simpleLightbox.refresh();
